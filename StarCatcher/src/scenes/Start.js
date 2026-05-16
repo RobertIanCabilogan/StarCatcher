@@ -20,7 +20,7 @@ export class Start extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.player.setBounce(0.2);
         this.player.setCollideWorldBounds(true);
-
+        
         this.anims.create({
             key: 'left',
             frames: this.anims.generateFrameNumbers('Man', { start: 0, end: 1 }),
@@ -35,7 +35,8 @@ export class Start extends Phaser.Scene {
             repeat: -1
         });
 
-        
+        this.bombs = this.physics.add.group();
+
         
         this.platforms.create(400, 750, 'Ground').setScale(6).refreshBody();
 
@@ -56,10 +57,13 @@ export class Start extends Phaser.Scene {
         });
         this.score = 0;
         this.scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+
+
         this.physics.add.collider(this.player, this.platforms);
         this.physics.add.collider(this.Stars, this.platforms);
         this.physics.add.overlap(this.player,this.Stars,this.collectStar,null,this);
-
+        this.physics.add.collider(this.bombs, this.platforms);
+        this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this);
     }
 
     update() {
@@ -95,5 +99,32 @@ export class Start extends Phaser.Scene {
         star.disableBody(true, true);
         this.score += 10;
         this.scoreText.setText('Score: ' + this.score);
+        if (stars.countActive(true) === 0)
+        {
+            stars.children.iterate(function (child) {
+
+                child.enableBody(true, child.x, 0, true, true);
+
+            });
+
+            var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+            var bomb = bombs.create(x, 16, 'bomb');
+            bomb.setBounce(1);
+            bomb.setCollideWorldBounds(true);
+            bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+
+        }
+    }
+
+    hitBomb (player, bomb)
+    {
+        this.physics.pause();
+
+        player.setTint(0xff0000);
+
+        player.anims.play('turn');
+
+        gameOver = true;
     }
 }
