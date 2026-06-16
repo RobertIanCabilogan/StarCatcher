@@ -24,6 +24,25 @@ export class Start extends Phaser.Scene {
         this.player.setBounce(0.2);
         this.player.setCollideWorldBounds(true);
         this.lives = 3;
+        this.timeleft = 60;
+        this.timerText = this.add.text(1150,16,'Time: 60',{fontSize: '24px',color: '#000'});
+        this.timerEvent = this.time.addEvent({
+        delay: 1000,
+        callback: () =>
+        {
+            this.timeleft--;
+
+            this.timerText.setText('Time: ' + this.timeleft);
+
+            if (this.timeleft <= 0)
+            {
+            this.physics.pause();
+            this.gameOver = true;
+            }
+        },
+            callbackScope: this,
+            loop: true
+        });
         this.anims.create({
             key: 'left',
             frames: this.anims.generateFrameNumbers('Man', { start: 0, end: 1 }),
