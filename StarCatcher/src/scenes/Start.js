@@ -10,17 +10,20 @@ export class Start extends Phaser.Scene {
         this.load.image('Sky', 'assets/Bg.jpg');
         this.load.image('Ground', 'assets/platform.png');
         this.load.spritesheet('Man', 'assets/sprite_sheet.png', { frameWidth: 456, frameHeight: 587 });
+        this.load.image('Heart', 'assets/hert.png');
     }
     
     create() {
-        
+        this.gameOver = false;
         this.add.image(400, 300, 'Sky');
         this.platforms = this.physics.add.staticGroup();
         this.player = this.physics.add.sprite(100, 450, 'Man').setScale(0.2);
+        this.player.body.setSize(200,540)
+        this.player.body.setOffset(120,50)
         this.cursors = this.input.keyboard.createCursorKeys();
         this.player.setBounce(0.2);
         this.player.setCollideWorldBounds(true);
-        
+        this.lives = 3;
         this.anims.create({
             key: 'left',
             frames: this.anims.generateFrameNumbers('Man', { start: 0, end: 1 }),
@@ -49,6 +52,19 @@ export class Start extends Phaser.Scene {
             repeat: 11,
             setXY: { x: 15, y: 0, stepX: 100 }
         });
+        this.add.text(16,45,'Lives:',{
+                fontSize: '32px',
+                color: '#000'
+            }
+        );
+        this.hearts = [];
+        for(let i = 0; i < this.lives; i++){
+           const heart =this.add.image(155 + (i * 40), 60, 'Heart');
+
+           heart.setScale(0.5);
+           heart.setScrollFactor(0);
+           this.hearts.push(heart);
+        }        
 
         this.Stars.children.iterate(function (child) {
 
@@ -64,11 +80,12 @@ export class Start extends Phaser.Scene {
         this.physics.add.overlap(this.player,this.Stars,this.collectStar,null,this);
         this.physics.add.collider(this.bombs, this.platforms);
         this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this);
+
     }
 
     update() {
-
-        if (this.cursors.left.isDown)
+        if (this.gameOver != true){
+                    if (this.cursors.left.isDown)
         {
             this.player.setVelocityX(-160);
 
@@ -93,38 +110,52 @@ export class Start extends Phaser.Scene {
         {
             this.player.setVelocityY(-330);
         }
+        }
+
     }
-    collectStar (player, star)
+    collectStar(player, star)
     {
         star.disableBody(true, true);
+
         this.score += 10;
         this.scoreText.setText('Score: ' + this.score);
-        if (stars.countActive(true) === 0)
+
+        if (this.Stars.countActive(true) === 0)
         {
-            stars.children.iterate(function (child) {
-
+            this.Stars.children.iterate(function (child)
+            {
                 child.enableBody(true, child.x, 0, true, true);
-
             });
 
-            var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+            const x = (player.x < 400)
+                ? Phaser.Math.Between(400, 800)
+                : Phaser.Math.Between(0, 400);
 
-            var bomb = bombs.create(x, 16, 'bomb');
+            const bomb = this.bombs.create(x,16, 'Bomba');
+            bomb.setScale(0.1)
             bomb.setBounce(1);
             bomb.setCollideWorldBounds(true);
-            bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-
+            bomb.setVelocity(
+            Phaser.Math.Between(-200, 200),
+            20
+            );
         }
     }
 
     hitBomb (player, bomb)
     {
-        this.physics.pause();
+        bomb.destroy();
 
-        player.setTint(0xff0000);
+        this.lives--
+        this.hearts[this.lives].setVisible(false);
 
-        player.anims.play('turn');
+        if (this.lives <= 0){
+            this.physics.pause()
+            player.setTint(0xff0000);
+            player.anims.stop();
 
-        gameOver = true;
+            this.gameOver = true;
+        }
+
     }
 }
